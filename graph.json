@@ -1,0 +1,13 @@
+{
+  "vertices" : {
+    "a" : "class Object",
+    "b" : "class Window",
+    "c" : "interface Serializable",
+    "d" : "class Document"
+  },
+  "edges" : [
+    [ "a", "b", "implements" ],
+    [ "b", "d", "implements" ],
+    [ "c", "d", "extends" ]
+  ]
+}
