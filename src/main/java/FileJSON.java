@@ -38,12 +38,12 @@ public class FileJSON {
         JSONObject json = new JSONObject(text);
 
         Map<String, Object> mapOfVertices = json.getJSONObject(Config.VERTICES_FIELD).toMap();
-        double start = mapOfVertices.size();
-        double end = 100 * start;
+        double start = 0; //mapOfVertices.size();
+        //double end = 100 * start;
         Random random = new Random();
         for (String name : mapOfVertices.keySet()) {
-            double randomX = start + (random.nextDouble() * (end - start));
-            double randomY = start + (random.nextDouble() * (end - start));
+            double randomX = start + (random.nextDouble() * 100);
+            double randomY = start + (random.nextDouble() * 100);
             vertices.put(name, new Vertex(randomX, randomY, name, (String) mapOfVertices.get(name)));
         }
 
@@ -53,6 +53,14 @@ public class FileJSON {
             List<String> edge = (List<String>) object;
             edges.add(new Edge(edge));
         }
+
+       /* for (Vertex vertex : vertices.values()) {
+            System.out.println(vertex.getName());
+        }*/
+
+        /*for (Edge edge : edges) {
+            System.out.println(edge.getV() + " " + edge.getU());
+        }*/
     }
 
     public Map<String, Vertex> getVertices() {

@@ -16,19 +16,33 @@ public class Graph {
     Graph(Map<String, Vertex> vertices, List<Edge> edges) {
         this.vertices = vertices;
         this.edges = edges;
-        minX = Double.MAX_VALUE;
-        minY = Double.MAX_VALUE;
+
+        Config.WIDTH = 50 * vertices.size() + Config.RESERVE;
+        Config.HEIGHT = 30 * vertices.size() + Config.RESERVE;
+
+        if (Config.WIDTH > 1280) {
+            Config.WIDTH = 1280;
+        }
+        if (Config.HEIGHT > 720) {
+            Config.HEIGHT = 720;
+        }
     }
 
     private void calculateCoefficients() {
         k = Math.sqrt(Config.WIDTH * Config.HEIGHT / (double) vertices.size());
         t = (double) Config.WIDTH / 10;
+        minX = Double.MAX_VALUE;
+        minY = Double.MAX_VALUE;
     }
 
-    public void forceDirectedAlgorithm() {
-        calculateCoefficients();
+    public void drawingStart() {
+        forceDirectedAlgorithm(Config.ITERATION_AMOUNT);
+    }
 
-        for (int i = 0; i < Config.ITERATION_AMOUNT; i++) {
+    @SuppressWarnings("StatementWithEmptyBody")
+    private void forceDirectedAlgorithm(int amount) {
+        calculateCoefficients();
+        for (int i = 0; i < amount; i++) {
 
             //calculate repulsive forces
             for (Vertex v : vertices.values()) {
@@ -52,14 +66,53 @@ public class Graph {
             for (Vertex v : vertices.values()) {
                 calculateNewPosition(v);
             }
-            System.out.println("\n");
 
             //calculate new temperature
             cool(i);
         }
 
+        while (checkIntersections());
+
         findNegativePositions();
         adjustPositions();
+    }
+
+    private boolean checkIntersections() {
+        boolean wasIntersection = false;
+        for (Vertex vertex : vertices.values()) {
+            for (Edge edge : edges) {
+                if (vertex.getName().equals(edge.getV()) || vertex.getName().equals(edge.getU())) {
+                    continue;
+                }
+
+                double x1 = vertices.get(edge.getV()).getPosition().getX();
+                double y1 = vertices.get(edge.getV()).getPosition().getY();
+                double x2 = vertices.get(edge.getU()).getPosition().getX();
+                double y2 = vertices.get(edge.getU()).getPosition().getY();
+                if (isIntersection(vertex, edge)) {
+                    System.out.println(vertex.getName() + " :   " + edge.getV() + " " + edge.getU());
+                    double angle = Math.atan2(y2 - y1, x2 - x1);
+                    double sin = Math.sin(angle);
+                    double cos = Math.cos(angle);
+
+                    double newX = vertex.getPosition().getX() + (Config.VERTEX_DIAMETER + Config.VERTEX_RADIUS) * sin;
+                    double newY = vertex.getPosition().getY() + (Config.VERTEX_DIAMETER + Config.VERTEX_RADIUS) * cos;
+                    Vector newPosition = new Vector(newX, newY);
+                    vertex.setPosition(newPosition);
+                    wasIntersection = true;
+                }
+            }
+        }
+
+        return wasIntersection;
+
+        /*if (wasIntersection) {
+            //forceDirectedAlgorithm(10);
+            calculateCoefficients();
+            findNegativePositions();
+            adjustPositions();
+            checkIntersections();
+        }*/
     }
 
     private void adjustPositions() {
@@ -76,7 +129,7 @@ public class Graph {
         } else if (minY < Config.RESERVE) {
             for (Vertex v : vertices.values()) {
                 Vector oldPosition = v.getPosition();
-                v.setPosition(new Vector(oldPosition.getX(), oldPosition.getY()  - minY + Config.RESERVE));
+                v.setPosition(new Vector(oldPosition.getX(), oldPosition.getY() - minY + Config.RESERVE));
             }
         }
     }
@@ -99,13 +152,11 @@ public class Graph {
 
         double multiplier = Math.min(vectorLength, t) / vectorLength;
         Vector multipliedVector = multiplyVector(displacement, multiplier);
-
         Vector newPosition = calculateVectorSum(vertex.getPosition(), multipliedVector);
+
         double newX = Math.min((double) Config.WIDTH / 2, Math.max(-1.0 * Config.WIDTH / 2.0, newPosition.getX()));
         double newY = Math.min((double) Config.HEIGHT / 2, Math.max(-1.0 * Config.HEIGHT / 2.0, newPosition.getY()));
         vertices.get(vertex.getName()).setPosition(new Vector(newX, newY));
-
-        System.out.println("x: " + newX + " | y: " + newY);
     }
 
     private void calculateAttractiveForces(String v, String u) {
@@ -113,7 +164,7 @@ public class Graph {
         Vector positionU = vertices.get(u).getPosition();
 
         Vector vectorDifference = calculateVectorDifference(positionV, positionU);
-        double vectorLength = calculateVectorLength(vectorDifference);
+        double vectorLength = calculateVectorLength(vectorDifference) + Config.VERTEX_DIAMETER;
         double attractionValue = attraction(vectorLength);
 
         double multiplier = attractionValue / vectorLength;
@@ -128,7 +179,7 @@ public class Graph {
 
     public void calculateRepulsiveForces(Vertex v, Vertex u) {
         Vector vectorDifference = calculateVectorDifference(v.getPosition(), u.getPosition());
-        double vectorLength = calculateVectorLength(vectorDifference);
+        double vectorLength = calculateVectorLength(vectorDifference) - Config.VERTEX_DIAMETER;
         double repulsionValue = repulsion(vectorLength);
 
         double multiplier = repulsionValue / vectorLength;
@@ -155,6 +206,28 @@ public class Graph {
     private Vector calculateVectorSum(Vector v, Vector u) {
         return new Vector(v.getX() + u.getX(),
                 v.getY() + u.getY());
+    }
+
+    private boolean isIntersection(Vertex vertex, Edge edge) {
+        double x1 = vertices.get(edge.getV()).getPosition().getX() - vertex.getPosition().getX();
+        double y1 = vertices.get(edge.getV()).getPosition().getY() - vertex.getPosition().getY();
+        double x2 = vertices.get(edge.getU()).getPosition().getX() - vertex.getPosition().getX();
+        double y2 = vertices.get(edge.getU()).getPosition().getY() - vertex.getPosition().getY();
+
+        double dx = x2 - x1;
+        double dy = y2 - y1;
+
+        double a = dx * dx + dy * dy;
+        double b = 2 * (x1 * dx + y1 * dy);
+        double c = x1 * x1 + y1 * y1 - Config.VERTEX_DIAMETER * Config.VERTEX_DIAMETER;
+
+        if (-b < 0) {
+            return c < 0;
+        } else if (-b < 2 * a) {
+            return 4 * a * c - b * b < 0;
+        } else {
+            return a + b + c < 0;
+        }
     }
 
     public double attraction(double x) {

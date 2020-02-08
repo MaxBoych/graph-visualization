@@ -13,10 +13,12 @@ public class VisualizationJSON extends JPanel {
         String path = args[0];
         FileJSON fileJSON = new FileJSON(path);
         fileJSON.parse();
+        Map<String, Vertex> vertices = fileJSON.getVertices();
+        List<Edge> edges = fileJSON.getEdges();
+        graph = new Graph(vertices, edges);
+        graph.drawingStart();
 
-        graph = new Graph(fileJSON.getVertices(), fileJSON.getEdges());
-        graph.forceDirectedAlgorithm();
-
+        //int width = vertices.size() *
         JFrame.setDefaultLookAndFeelDecorated(true);
         JFrame jFrame = new JFrame(Config.APP_NAME);
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -104,29 +106,6 @@ public class VisualizationJSON extends JPanel {
     }
 
     private void drawEdgeLine(Graphics2D graphics, double x1, double y1, double x2, double y2) {
-        /*graphics.setColor(Color.BLACK);
-        graphics.draw(new Line2D.Double(x1, y1, x2, y2));
-
-        ArrowHead arrowHead = new ArrowHead();
-        double length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-        double t1 = Config.VERTEX_RADIUS / length;
-        double t2 = (length - Config.VERTEX_RADIUS) / length;
-        double arrowX, arrowY;
-        if (t1 > t2) {
-            arrowX = x1 + t1 * (x2 - x1);
-            arrowY = y1 + t1 * (y2 - y1);
-        } else {
-            arrowX = x1 + t2 * (x2 - x1);
-            arrowY = y1 + t2 * (y2 - y1);
-        }
-
-        double angle = Math.atan2(y2 - y1, x2 - x1);
-        AffineTransform transform = new AffineTransform();
-        transform.translate(arrowX, arrowY);
-        transform.rotate(angle + Math.PI / 2);
-        arrowHead.transform(transform);
-        graphics.draw(arrowHead);*/
-
         double angleFrom = angleBetweenTwoPoints(x1, y1, x2, y2);
         double angleTo = angleBetweenTwoPoints(x2, y2, x1, y1);
 
