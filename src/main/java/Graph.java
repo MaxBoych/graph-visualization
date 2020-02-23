@@ -158,7 +158,10 @@ public class Graph {
         System.out.println("start: " + bestAmount);
         for (Edge edge1 : edges) {
             for (Edge edge2 : edges) {
-                if (edge1 == edge2) {
+                if (edge1 == edge2 || edge1.getV().equals(edge2.getV()) ||
+                        edge1.getV().equals(edge2.getU()) ||
+                        edge1.getU().equals(edge2.getV()) ||
+                        edge1.getU().equals(edge2.getU())) {
                     //System.out.println("HERE");
                     continue;
                 }
@@ -183,10 +186,10 @@ public class Graph {
                     Vertex v1_case1 = new Vertex(v2_pos.getX(), v2_pos.getY(), v1.getName(), v1.getValue());
                     Vertex v2_case1 = new Vertex(v1_pos.getX(), v1_pos.getY(), v2.getName(), v2.getValue());
                     swapVertices(edge1.getV(), v1_case1, edge2.getV(), v2_case1);
-                    int case1Amount = calculateEdgesIntersection();
-                    //System.out.println("case1: " + case1Amount);
-                    if (case1Amount < bestAmount) {
-                        bestAmount = case1Amount;
+                    int newCase = calculateEdgesIntersection();
+                    //System.out.println("case1: " + newCase);
+                    if (newCase < bestAmount) {
+                        bestAmount = newCase;
                         bestCase = 1;
                     }
                     swapVertices(edge1.getV(), v1, edge2.getV(), v2);
@@ -196,10 +199,10 @@ public class Graph {
                     Vertex v2_case2 = new Vertex(u1_pos.getX(), u1_pos.getY(), v2.getName(), v2.getValue());
                     Vertex u1_case2 = new Vertex(v2_pos.getX(), v2_pos.getY(), u1.getName(), u1.getValue());
                     swapVertices(edge2.getV(), v2_case2, edge1.getU(), u1_case2);
-                    int case2Amount = calculateEdgesIntersection();
-                    //System.out.println("case2: " + case2Amount);
-                    if (case2Amount < bestAmount) {
-                        bestAmount = case2Amount;
+                    newCase = calculateEdgesIntersection();
+                    //System.out.println("case2: " + newCase);
+                    if (newCase < bestAmount) {
+                        bestAmount = newCase;
                         bestCase = 2;
                     }
                     swapVertices(edge2.getV(), v2, edge1.getU(), u1);
@@ -209,9 +212,10 @@ public class Graph {
                     Vertex u1_case3 = new Vertex(u2_pos.getX(), u2_pos.getY(), u1.getName(), u1.getValue());
                     Vertex u2_case3 = new Vertex(u1_pos.getX(), u1_pos.getY(), u2.getName(), u2.getValue());
                     swapVertices(edge1.getU(), u1_case3, edge2.getU(), u2_case3);
-                    int case3Amount = calculateEdgesIntersection();
-                    if (case3Amount < bestAmount) {
-                        bestAmount = case3Amount;
+                    newCase = calculateEdgesIntersection();
+                    //System.out.println("case3: " + newCase);
+                    if (newCase < bestAmount) {
+                        bestAmount = newCase;
                         bestCase = 3;
                     }
                     swapVertices(edge1.getU(), u1, edge2.getU(), u2);
@@ -221,9 +225,10 @@ public class Graph {
                     Vertex u2_case4 = new Vertex(v1_pos.getX(), v1_pos.getY(), u2.getName(), u2.getValue());
                     Vertex v1_case4 = new Vertex(u2_pos.getX(), u2_pos.getY(), v1.getName(), v1.getValue());
                     swapVertices(edge2.getU(), u2_case4, edge1.getV(), v1_case4);
-                    int case4Amount = calculateEdgesIntersection();
-                    if (case4Amount < bestAmount) {
-                        bestAmount = case4Amount;
+                    newCase = calculateEdgesIntersection();
+                    //System.out.println("case4: " + newCase);
+                    if (newCase < bestAmount) {
+                        bestAmount = newCase;
                         bestCase = 4;
                     }
                     swapVertices(edge2.getU(), u2, edge1.getV(), v1);
@@ -263,7 +268,10 @@ public class Graph {
         int amount = 0;
         for (Edge edge1 : edges) {
             for (Edge edge2 : edges) {
-                if (edge1 == edge2) {
+                if (edge1 == edge2 || edge1.getV().equals(edge2.getV()) ||
+                        edge1.getV().equals(edge2.getU()) ||
+                        edge1.getU().equals(edge2.getV()) ||
+                        edge1.getU().equals(edge2.getU())) {
                     continue;
                 }
 
