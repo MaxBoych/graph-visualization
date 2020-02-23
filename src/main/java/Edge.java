@@ -18,6 +18,12 @@ public class Edge {
         }
     }
 
+    Edge(Edge edge) {
+        v = edge.getV();
+        u = edge.getU();
+        value = edge.getValue();
+    }
+
     Edge(String v, String u, String value) {
         this.v = v;
         this.u = u;
