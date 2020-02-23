@@ -1,5 +1,6 @@
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class Graph {
 
@@ -40,7 +41,7 @@ public class Graph {
 
         forceDirectedAlgorithm(Config.ITERATION_AMOUNT);
 
-        while (checkVertexEdgeIntersections()) ;
+        //while (checkVertexEdgeIntersections()) ;
 
         //forceDirectedAlgorithm(50);
 
@@ -55,7 +56,13 @@ public class Graph {
             }
         }
 
-        while (checkVertexEdgeIntersections()) ;
+        for (int i = 0; i < 100; i++) {
+            if (checkVertexEdgeIntersections()) {
+                break;
+            }
+        }
+
+        //while (checkVertexEdgeIntersections()) ;
         findNegativePositions();
         adjustPositions();
     }
@@ -106,12 +113,13 @@ public class Graph {
                 double y2 = vertices.get(edge.getU()).getPosition().getY();
                 if (isVertexEdgeIntersection(vertex, edge)) {
                     //System.out.println(vertex.getName() + " :   " + edge.getV() + " " + edge.getU());
-                    double angle = Math.atan2(y2 - y1, x2 - x1);
-                    double sin = Math.sin(angle);
-                    double cos = Math.cos(angle);
+                    //double angle = Math.atan2(y2 - y1, x2 - x1);
+                    //double sin = Math.sin(angle);
+                    //double cos = Math.cos(angle);
 
-                    double newX = vertex.getPosition().getX() + (2 * Config.VERTEX_DIAMETER) * sin /* Math.random()*/;
-                    double newY = vertex.getPosition().getY() + (2 * Config.VERTEX_DIAMETER) * cos /* Math.random()*/;
+                    Random random = new Random();
+                    double newX = vertex.getPosition().getX() + (Config.VERTEX_DIAMETER) /* sin*/ * (1 + Math.random()) * (random.nextBoolean() ? 1 : -1);
+                    double newY = vertex.getPosition().getY() + (Config.VERTEX_DIAMETER) /* cos*/ * (1 + Math.random()) * (random.nextBoolean() ? 1 : -1);
                     Vector newPosition = new Vector(newX, newY);
                     vertex.setPosition(newPosition);
                     wasNotIntersection = false;
