@@ -50,14 +50,16 @@ public class Graph {
         minX = Double.MAX_VALUE;
         minY = Double.MAX_VALUE;*/
 
-        for (int i = 0; i < 100; i++) {
-            if (checkEdgesIntersection()) {
+        while (!checkVertexEdgeIntersections()) ;
+
+        /*for (int i = 0; i < 100; i++) {
+            if (checkVertexEdgeIntersections()) {
                 break;
             }
-        }
+        }*/
 
         for (int i = 0; i < 100; i++) {
-            if (checkVertexEdgeIntersections()) {
+            if (checkEdgesIntersection()) {
                 break;
             }
         }
@@ -107,10 +109,10 @@ public class Graph {
                     continue;
                 }
 
-                double x1 = vertices.get(edge.getV()).getPosition().getX();
-                double y1 = vertices.get(edge.getV()).getPosition().getY();
-                double x2 = vertices.get(edge.getU()).getPosition().getX();
-                double y2 = vertices.get(edge.getU()).getPosition().getY();
+                //double x1 = vertices.get(edge.getV()).getPosition().getX();
+                //double y1 = vertices.get(edge.getV()).getPosition().getY();
+                //double x2 = vertices.get(edge.getU()).getPosition().getX();
+                //double y2 = vertices.get(edge.getU()).getPosition().getY();
                 if (isVertexEdgeIntersection(vertex, edge)) {
                     //System.out.println(vertex.getName() + " :   " + edge.getV() + " " + edge.getU());
                     //double angle = Math.atan2(y2 - y1, x2 - x1);
