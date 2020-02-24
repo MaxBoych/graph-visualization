@@ -21,12 +21,12 @@ public class Graph {
         Config.WIDTH = 50 * vertices.size() + Config.RESERVE;
         Config.HEIGHT = 30 * vertices.size() + Config.RESERVE;
 
-        if (Config.WIDTH > 1280) {
+        /*if (Config.WIDTH > 1280) {
             Config.WIDTH = 1280;
         }
         if (Config.HEIGHT > 720) {
             Config.HEIGHT = 720;
-        }
+        }*/
     }
 
     private void calculateCoefficients() {
@@ -36,35 +36,59 @@ public class Graph {
         minY = Double.MAX_VALUE;
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
+    //@SuppressWarnings("StatementWithEmptyBody")
     public void drawingStart() {
 
+        //int amountEdgeIntersections;
         forceDirectedAlgorithm(Config.ITERATION_AMOUNT);
 
-        //while (checkVertexEdgeIntersections()) ;
-
-        //forceDirectedAlgorithm(50);
-
-        /*findNegativePositions();
-        adjustPositions();
-        minX = Double.MAX_VALUE;
-        minY = Double.MAX_VALUE;*/
-
-        while (!checkVertexEdgeIntersections()) ;
 
         /*for (int i = 0; i < 100; i++) {
-            if (checkVertexEdgeIntersections()) {
+            if (!checkVertexEdgeIntersections()) {
                 break;
             }
         }*/
 
-        for (int i = 0; i < 100; i++) {
-            if (checkEdgesIntersection()) {
+        /*for (int i = 0; i < 100; i++) {
+            if (checkEdgeIntersection()) {
                 break;
             }
-        }
+        }*/
+        //forceDirectedAlgorithm(15);
 
-        //while (checkVertexEdgeIntersections()) ;
+
+        /*do {
+
+            //forceDirectedAlgorithm(Config.ITERATION_AMOUNT);
+
+
+            //while (checkVertexEdgeIntersections()) ;
+
+            for (int i = 0; i < 100; i++) {
+                if (!checkVertexEdgeIntersections()) {
+                    break;
+                }
+            }
+
+            for (int i = 0; i < 100; i++) {
+                if (checkEdgeIntersection()) {
+                    break;
+                }
+            }
+            //amountEdgeIntersections = calculateEdgeIntersections();
+
+//            if (simpleCheckVertexEdgeIntersections()) {
+//                continue;
+//            }
+
+            for (Vertex v : vertices.values()) {
+                calculateNewPosition(v);
+            }
+
+        } while (!edgeNormalization());*/
+
+        //forceDirectedAlgorithm(Config.ITERATION_AMOUNT);
+
         findNegativePositions();
         adjustPositions();
     }
@@ -77,7 +101,7 @@ public class Graph {
             for (Vertex v : vertices.values()) {
                 vertices.get(v.getName()).setDisplacement(new Vector(0.0, 0.0));
                 for (Vertex u : vertices.values()) {
-                    if (v.getName().equals(u.getName())) {
+                    if (v == u) {
                         continue;
                     }
                     calculateRepulsiveForces(v, u);
@@ -91,18 +115,194 @@ public class Graph {
                 calculateAttractiveForces(v, u);
             }
 
+
             //calculate new positions
             for (Vertex v : vertices.values()) {
                 calculateNewPosition(v);
             }
+
+            //normalize vertex and edge intersections and lengths
+            normalizeEdgeLength();
+            normalizeVertexIntersection();
+            normalizeEdgeIntersection();
+            normalizeVertexEdgeIntersection();
 
             //calculate new temperature
             cool(i);
         }
     }
 
+    private void normalizeEdgeLength() {
+        double averageLength = Config.AVERAGE_EDGE_LENGTH; //calculateAverageEdgeLength();
+        for (Edge edge : edges) {
+            Vertex v = vertices.get(edge.getV());
+            Vertex u = vertices.get(edge.getU());
+
+            double dx = v.getPosition().getX() - u.getPosition().getX();
+            double dy = v.getPosition().getY() - u.getPosition().getY();
+            double distance = calculateVectorLength(new Vector(dx, dy));
+            double difference = averageLength - distance;
+
+            if (Math.abs(difference) > 0.25 * averageLength) {
+                double xV = v.getPosition().getX();
+                double yV = v.getPosition().getY();
+                double xU = u.getPosition().getX();
+                double yU = u.getPosition().getY();
+
+                double newDistance = averageLength * 0.75 + averageLength * 0.5 * (new Random()).nextDouble();
+                if (difference <= 0) {
+                    double shortening = (distance - newDistance) / 2;
+                    if (dx < 0) {
+                        xV += shortening;
+                        xU -= shortening;
+                    } else {
+                        xV -= shortening;
+                        xU += shortening;
+                    }
+
+                    if (dy < 0) {
+                        yV += shortening;
+                        yU -= shortening;
+                    } else {
+                        yV -= shortening;
+                        yU += shortening;
+                    }
+                } else {
+                    double elongation = (newDistance - distance) / 2;
+                    if (dx < 0) {
+                        xV -= elongation;
+                        xU += elongation;
+                    } else {
+                        xV += elongation;
+                        xU -= elongation;
+                    }
+
+                    if (dy < 0) {
+                        yV -= elongation;
+                        yU += elongation;
+                    } else {
+                        yV += elongation;
+                        yU -= elongation;
+                    }
+                }
+
+                v.setPosition(new Vector(xV, yV));
+                u.setPosition(new Vector(xU, yU));
+            }
+        }
+    }
+
+    private boolean edgeNormalization() {
+        double averageLength = Config.AVERAGE_EDGE_LENGTH; //calculateAverageEdgeLength();
+        for (Edge edge : edges) {
+            Vertex v = vertices.get(edge.getV());
+            Vertex u = vertices.get(edge.getU());
+            Vector vector = new Vector(
+                    u.getPosition().getX() - v.getPosition().getX(),
+                    u.getPosition().getY() - v.getPosition().getY()
+            );
+
+            double vectorLength = calculateVectorLength(vector);
+            double difference = averageLength - vectorLength;
+            if (Math.abs(difference) > 0.25 * averageLength) {
+                Random random = new Random();
+                double newLength = averageLength * 0.75 + averageLength * 0.5 * random.nextDouble();
+                double newDifference = Math.abs(newLength - vectorLength);
+
+                double lambda;
+                double newX;
+                double newY;
+                //double angle = 360 * random.nextDouble() * Math.PI / 180;
+                if (random.nextBoolean()) {
+                    if (difference > 0) {
+                        lambda = newDifference / vectorLength;
+                        newX = v.getPosition().getX() * (1 + lambda) - u.getPosition().getX() * lambda;
+                        newY = v.getPosition().getY() * (1 + lambda) - u.getPosition().getY() * lambda;
+                    } else {
+                        lambda = newDifference / (vectorLength - newDifference);
+                        newX = (v.getPosition().getX() + u.getPosition().getX() * lambda) / (1 + lambda);
+                        newY = (v.getPosition().getY() + u.getPosition().getY() * lambda) / (1 + lambda);
+                    }
+                    vertices.get(edge.getV()).setPosition(new Vector(newX /*+ 40 * Math.sin(angle)*/, newY /*+ 40 * Math.cos(angle)*/));
+                } else {
+                    if (difference > 0) {
+                        lambda = vectorLength / newDifference;
+                        newX = (u.getPosition().getX() * (1 + lambda) - v.getPosition().getX()) / lambda;
+                        newY = (u.getPosition().getY() * (1 + lambda) - v.getPosition().getY()) / lambda;
+                    } else {
+                        lambda = (vectorLength - newDifference) / newDifference;
+                        newX = (v.getPosition().getX() + u.getPosition().getX() * lambda) / (1 + lambda);
+                        newY = (v.getPosition().getY() + u.getPosition().getY() * lambda) / (1 + lambda);
+                    }
+                    vertices.get(edge.getU()).setPosition(new Vector(newX /*+ 40 * Math.sin(angle)*/, newY /*+ 40 * Math.cos(angle)*/));
+                }
+
+                /*if (Double.isNaN(newX)) {
+                    System.out.println("PANIC for X in edgeNormalization!");
+                }
+
+                if (Double.isNaN(newY)) {
+                    System.out.println("PANIC for Y in edgeNormalization!");
+                }*/
+
+                System.out.println(newX + " " + newY);
+                System.out.println(lambda);
+                System.out.println();
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private double calculateAverageEdgeLength() {
+        double averageLength = 0;
+        for (Edge edge : edges) {
+            Vertex v = vertices.get(edge.getV());
+            Vertex u = vertices.get(edge.getU());
+            Vector vector = new Vector(
+                    u.getPosition().getX() - v.getPosition().getX(),
+                    u.getPosition().getY() - v.getPosition().getY()
+            );
+            averageLength += calculateVectorLength(vector);
+        }
+        averageLength /= edges.size();
+
+        return averageLength;
+    }
+
+    private boolean simpleCheckVertexEdgeIntersections() {
+        for (Vertex vertex : vertices.values()) {
+            for (Edge edge : edges) {
+                if (vertex.getName().equals(edge.getV()) || vertex.getName().equals(edge.getU())) {
+                    continue;
+                }
+
+                if (isVertexEdgeIntersection(vertex, edge).getFirst()) {
+                    return true;
+                }
+            }
+
+            for (Vertex vertex1 : vertices.values()) {
+                if (vertex == vertex1) {
+                    continue;
+                }
+
+                double dx = vertex.getPosition().getX() - vertex1.getPosition().getX();
+                double dy = vertex.getPosition().getY() - vertex1.getPosition().getY();
+                double distance = calculateVectorLength(new Vector(dx, dy));
+                if (distance < 2 * Config.VERTEX_DIAMETER) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private boolean checkVertexEdgeIntersections() {
-        boolean wasNotIntersection = true;
+        boolean wasIntersection = false;
         for (Vertex vertex : vertices.values()) {
             for (Edge edge : edges) {
                 if (vertex.getName().equals(edge.getV()) || vertex.getName().equals(edge.getU())) {
@@ -113,18 +313,26 @@ public class Graph {
                 //double y1 = vertices.get(edge.getV()).getPosition().getY();
                 //double x2 = vertices.get(edge.getU()).getPosition().getX();
                 //double y2 = vertices.get(edge.getU()).getPosition().getY();
-                if (isVertexEdgeIntersection(vertex, edge)) {
+                if (isVertexEdgeIntersection(vertex, edge).getFirst()) {
                     //System.out.println(vertex.getName() + " :   " + edge.getV() + " " + edge.getU());
                     //double angle = Math.atan2(y2 - y1, x2 - x1);
                     //double sin = Math.sin(angle);
                     //double cos = Math.cos(angle);
 
                     Random random = new Random();
-                    double newX = vertex.getPosition().getX() + (Config.VERTEX_DIAMETER) /* sin*/ * (1 + Math.random()) * (random.nextBoolean() ? 1 : -1);
-                    double newY = vertex.getPosition().getY() + (Config.VERTEX_DIAMETER) /* cos*/ * (1 + Math.random()) * (random.nextBoolean() ? 1 : -1);
+                    double newX = vertex.getPosition().getX() + (Config.VERTEX_DIAMETER) * (1 + Math.random()) * (random.nextBoolean() ? 1 : -1);
+                    double newY = vertex.getPosition().getY() + (Config.VERTEX_DIAMETER) * (1 + Math.random()) * (random.nextBoolean() ? 1 : -1);
                     Vector newPosition = new Vector(newX, newY);
                     vertex.setPosition(newPosition);
-                    wasNotIntersection = false;
+                    wasIntersection = true;
+
+                    /*if (Double.isNaN(newX)) {
+                        System.out.println("PANIC for X in checkVertexEdgeIntersections!");
+                    }
+
+                    if (Double.isNaN(newY)) {
+                        System.out.println("PANIC for Y in checkVertexEdgeIntersections!");
+                    }*/
                 }
             }
 
@@ -138,20 +346,20 @@ public class Graph {
                 double distance = calculateVectorLength(new Vector(dx, dy));
                 if (distance < 2 * Config.VERTEX_DIAMETER) {
                     vertex1.setPosition(new Vector(
-                            vertex1.getPosition().getX() + 1.2*Config.VERTEX_DIAMETER,
-                            vertex1.getPosition().getY() + 1.2*Config.VERTEX_DIAMETER)
+                            vertex1.getPosition().getX() + 1.2 * Config.VERTEX_DIAMETER,
+                            vertex1.getPosition().getY() + 1.2 * Config.VERTEX_DIAMETER)
                     );
 
                     vertex.setPosition(new Vector(
-                            vertex.getPosition().getX() - 1.2*Config.VERTEX_DIAMETER,
-                            vertex.getPosition().getY() - 1.2*Config.VERTEX_DIAMETER)
+                            vertex.getPosition().getX() - 1.2 * Config.VERTEX_DIAMETER,
+                            vertex.getPosition().getY() - 1.2 * Config.VERTEX_DIAMETER)
                     );
-                    wasNotIntersection = false;
+                    wasIntersection = true;
                 }
             }
         }
 
-        return wasNotIntersection;
+        return wasIntersection;
 
         /*if (wasIntersection) {
             //forceDirectedAlgorithm(10);
@@ -162,13 +370,105 @@ public class Graph {
         }*/
     }
 
-    private boolean checkEdgesIntersection() {
+    private void normalizeVertexEdgeIntersection() {
+        for (Vertex vertex : vertices.values()) {
+            for (Edge edge : edges) {
+                if (vertex.getName().equals(edge.getV()) || vertex.getName().equals(edge.getU())) {
+                    continue;
+                }
+
+                Vertex v = vertices.get(edge.getV());
+                Vertex u = vertices.get(edge.getU());
+
+                //System.out.println("HERE");
+
+                Couple<Boolean, Vector> couple = isVertexEdgeIntersection(vertex, edge);
+                //System.out.println(couple.getFirst());
+                if (couple.getFirst()) {
+                    System.out.println(vertex.getName() + "     " + edge.getV() + " ---> " + edge.getU());
+                    Vector vector = couple.getSecond();
+
+                    double xVertex = vertex.getPosition().getX();
+                    double yVertex = vertex.getPosition().getY();
+                    double xV = v.getPosition().getX();
+                    double yV = v.getPosition().getY();
+                    double xU = u.getPosition().getX();
+                    double yU = u.getPosition().getY();
+                    if (vector.getX() < 0) {
+                        xVertex -= Config.VERTEX_RADIUS;
+                        xV += Config.VERTEX_RADIUS;
+                        xU += Config.VERTEX_RADIUS;
+                    } else {
+                        xVertex += Config.VERTEX_RADIUS;
+                        xV -= Config.VERTEX_RADIUS;
+                        xU -= Config.VERTEX_RADIUS;
+                    }
+
+                    if (vector.getY() < 0) {
+                        yVertex -= Config.VERTEX_RADIUS;
+                        yV += Config.VERTEX_RADIUS;
+                        yU += Config.VERTEX_RADIUS;
+                    } else {
+                        yVertex += Config.VERTEX_RADIUS;
+                        yV -= Config.VERTEX_RADIUS;
+                        yU -= Config.VERTEX_RADIUS;
+                    }
+
+                    vertex.setPosition(new Vector(xVertex, yVertex));
+                    v.setPosition(new Vector(xV, yV));
+                    u.setPosition(new Vector(xU, yU));
+                }
+            }
+        }
+    }
+
+    private void normalizeVertexIntersection() {
+        for (Vertex v : vertices.values()) {
+            for (Vertex u : vertices.values()) {
+                if (v == u) {
+                    continue;
+                }
+
+                double dx = v.getPosition().getX() - u.getPosition().getX();
+                double dy = v.getPosition().getY() - u.getPosition().getY();
+                double distance = calculateVectorLength(new Vector(dx, dy));
+
+                if (distance <= Config.VERTEX_DIAMETER + 15) {
+                    double xV = v.getPosition().getX();
+                    double yV = v.getPosition().getY();
+                    double xU = u.getPosition().getX();
+                    double yU = u.getPosition().getY();
+                    if (dx < 0) {
+                        xV -= Config.VERTEX_RADIUS;
+                        xU += Config.VERTEX_RADIUS;
+                    } else {
+                        xV += Config.VERTEX_RADIUS;
+                        xU -= Config.VERTEX_RADIUS;
+                    }
+
+                    if (dy < 0) {
+                        yV -= Config.VERTEX_RADIUS;
+                        yU += Config.VERTEX_RADIUS;
+                    } else {
+                        yV += Config.VERTEX_RADIUS;
+                        yU -= Config.VERTEX_RADIUS;
+                    }
+
+                    v.setPosition(new Vector(xV, yV));
+                    u.setPosition(new Vector(xU, yU));
+                }
+            }
+        }
+    }
+
+    private boolean normalizeEdgeIntersection() {
         boolean wasNotIntersection = true;
-        int bestAmount = calculateEdgesIntersection();
-        System.out.println("start: " + bestAmount);
+        int bestAmount = calculateEdgeIntersections();
+        //System.out.println("start: " + bestAmount);
         for (Edge edge1 : edges) {
             for (Edge edge2 : edges) {
-                if (edge1 == edge2 || edge1.getV().equals(edge2.getV()) ||
+                if (edge1 == edge2 ||
+                        edge1.getV().equals(edge2.getV()) ||
                         edge1.getV().equals(edge2.getU()) ||
                         edge1.getU().equals(edge2.getV()) ||
                         edge1.getU().equals(edge2.getU())) {
@@ -196,7 +496,7 @@ public class Graph {
                     Vertex v1_case1 = new Vertex(v2_pos.getX(), v2_pos.getY(), v1.getName(), v1.getValue());
                     Vertex v2_case1 = new Vertex(v1_pos.getX(), v1_pos.getY(), v2.getName(), v2.getValue());
                     swapVertices(edge1.getV(), v1_case1, edge2.getV(), v2_case1);
-                    int newCase = calculateEdgesIntersection();
+                    int newCase = calculateEdgeIntersections();
                     //System.out.println("case1: " + newCase);
                     if (newCase < bestAmount) {
                         bestAmount = newCase;
@@ -209,7 +509,7 @@ public class Graph {
                     Vertex v2_case2 = new Vertex(u1_pos.getX(), u1_pos.getY(), v2.getName(), v2.getValue());
                     Vertex u1_case2 = new Vertex(v2_pos.getX(), v2_pos.getY(), u1.getName(), u1.getValue());
                     swapVertices(edge2.getV(), v2_case2, edge1.getU(), u1_case2);
-                    newCase = calculateEdgesIntersection();
+                    newCase = calculateEdgeIntersections();
                     //System.out.println("case2: " + newCase);
                     if (newCase < bestAmount) {
                         bestAmount = newCase;
@@ -222,7 +522,7 @@ public class Graph {
                     Vertex u1_case3 = new Vertex(u2_pos.getX(), u2_pos.getY(), u1.getName(), u1.getValue());
                     Vertex u2_case3 = new Vertex(u1_pos.getX(), u1_pos.getY(), u2.getName(), u2.getValue());
                     swapVertices(edge1.getU(), u1_case3, edge2.getU(), u2_case3);
-                    newCase = calculateEdgesIntersection();
+                    newCase = calculateEdgeIntersections();
                     //System.out.println("case3: " + newCase);
                     if (newCase < bestAmount) {
                         bestAmount = newCase;
@@ -235,7 +535,7 @@ public class Graph {
                     Vertex u2_case4 = new Vertex(v1_pos.getX(), v1_pos.getY(), u2.getName(), u2.getValue());
                     Vertex v1_case4 = new Vertex(u2_pos.getX(), u2_pos.getY(), v1.getName(), v1.getValue());
                     swapVertices(edge2.getU(), u2_case4, edge1.getV(), v1_case4);
-                    newCase = calculateEdgesIntersection();
+                    newCase = calculateEdgeIntersections();
                     //System.out.println("case4: " + newCase);
                     if (newCase < bestAmount) {
                         bestAmount = newCase;
@@ -265,7 +565,7 @@ public class Graph {
             }
         }
 
-        System.out.println("end: " + bestAmount);
+        //System.out.println("end: " + bestAmount);
         return wasNotIntersection;
     }
 
@@ -274,7 +574,7 @@ public class Graph {
         vertices.put(key2, v2);
     }
 
-    private int calculateEdgesIntersection() {
+    private int calculateEdgeIntersections() {
         int amount = 0;
         for (Edge edge1 : edges) {
             for (Edge edge2 : edges) {
@@ -329,13 +629,22 @@ public class Graph {
         Vector displacement = vertex.getDisplacement();
         double vectorLength = calculateVectorLength(displacement);
 
-        double multiplier = Math.min(vectorLength, t) / vectorLength;
-        Vector multipliedVector = multiplyVector(displacement, multiplier);
+        double multiplier = Math.min(vectorLength, t)/* / vectorLength*/;
+        Vector dividedVector = calculateVectorDivision(displacement, vectorLength);
+        Vector multipliedVector = multiplyVector(dividedVector, multiplier);
         Vector newPosition = calculateVectorSum(vertex.getPosition(), multipliedVector);
 
         double newX = Math.min((double) Config.WIDTH / 2, Math.max(-1.0 * Config.WIDTH / 2.0, newPosition.getX()));
         double newY = Math.min((double) Config.HEIGHT / 2, Math.max(-1.0 * Config.HEIGHT / 2.0, newPosition.getY()));
         vertices.get(vertex.getName()).setPosition(new Vector(newX, newY));
+
+        /*if (Double.isNaN(newX)) {
+            System.out.println("PANIC for X in calculateNewPosition!");
+        }
+
+        if (Double.isNaN(newY)) {
+            System.out.println("PANIC for Y in calculateNewPosition!");
+        }*/
     }
 
     private void calculateAttractiveForces(String v, String u) {
@@ -346,8 +655,10 @@ public class Graph {
         double vectorLength = calculateVectorLength(vectorDifference) /*+ Config.VERTEX_DIAMETER*/;
         double attractionValue = attraction(vectorLength) /*+ Config.VERTEX_DIAMETER*/;
 
-        double multiplier = attractionValue / vectorLength;
-        Vector multipliedVector = multiplyVector(vectorDifference, multiplier);
+        Vector dividedVector = calculateVectorDivision(vectorDifference, vectorLength);
+
+        //double multiplier = attractionValue / vectorLength;
+        Vector multipliedVector = multiplyVector(dividedVector, attractionValue);
 
         Vector displacementV = vertices.get(v).getDisplacement();
         vertices.get(v).setDisplacement(calculateVectorDifference(displacementV, multipliedVector));
@@ -358,13 +669,31 @@ public class Graph {
 
     public void calculateRepulsiveForces(Vertex v, Vertex u) {
         Vector vectorDifference = calculateVectorDifference(v.getPosition(), u.getPosition());
+//        System.out.println("position V: " + v.getName() + " " + v.getPosition().getX() + " " + v.getPosition().getY());
+//        System.out.println("position U: " + u.getName() + " " + u.getPosition().getX() + " " + u.getPosition().getY());
+//        System.out.println("difference: " + vectorDifference.getX() + " " + vectorDifference.getY());
         double vectorLength = calculateVectorLength(vectorDifference);
         double repulsionValue = repulsion(vectorLength);
 
-        double multiplier = repulsionValue / vectorLength;
-        Vector multipliedVector = multiplyVector(vectorDifference, multiplier);
+        Vector dividedVector = calculateVectorDivision(vectorDifference, vectorLength);
+        //double multiplier = repulsionValue / vectorLength;
+        //System.out.println("repulsion: " + repulsionValue + "   length: " + vectorLength);
+        Vector multipliedVector = multiplyVector(dividedVector, repulsionValue);
 
         vertices.get(v.getName()).setDisplacement(calculateVectorSum(v.getDisplacement(), multipliedVector));
+
+//        if (Double.isNaN(calculateVectorSum(v.getDisplacement(), multipliedVector).getX())) {
+//            System.out.println("PANIC for X in calculateRepulsiveForces!");
+//            System.exit(0);
+//        }
+//
+//        if (Double.isNaN(calculateVectorSum(v.getDisplacement(), multipliedVector).getY())) {
+//            System.out.println("PANIC for Y in calculateRepulsiveForces!");
+//        }
+    }
+
+    private Vector calculateVectorDivision(Vector vector, double divider) {
+        return new Vector(vector.getX() / divider, vector.getY() / divider);
     }
 
     private Vector multiplyVector(Vector vector, double multiplier) {
@@ -387,7 +716,39 @@ public class Graph {
                 v.getY() + u.getY());
     }
 
-    private boolean isVertexEdgeIntersection(Vertex vertex, Edge edge) {
+    private Couple<Boolean, Vector> isVertexEdgeIntersection(Vertex vertex, Edge edge) {
+        double x1 = vertices.get(edge.getV()).getPosition().getX();
+        double y1 = vertices.get(edge.getV()).getPosition().getY();
+        double x2 = vertices.get(edge.getU()).getPosition().getX();
+        double y2 = vertices.get(edge.getU()).getPosition().getY();
+        double x3 = vertex.getPosition().getX();
+        double y3 = vertex.getPosition().getY();
+
+        double x4 = ((x2 - x1) * (y2 - y1) * (y3 - y1) + x1 * Math.pow(y2 - y1, 2) + x3 * Math.pow(x2 - x1, 2)) / (Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+        double y4 = (y2 - y1) * (x4 - x1) / (x2 - x1) + y1;
+
+        Vector vector = new Vector(x3 - x4, y3 - y4);
+        double distance = calculateVectorLength(vector);
+        //System.out.println(distance);
+        double minX = Math.min(x1, x2);
+        double maxX = Math.max(x1, x2);
+        double minY = Math.min(y1, y2);
+        double maxY = Math.max(y1, y2);
+        if (distance <= Config.VERTEX_RADIUS &&
+                (x3 + Config.VERTEX_RADIUS >= minX) &&
+                (x3 - Config.VERTEX_RADIUS <= maxX) &&
+                (y3 + Config.VERTEX_RADIUS >= minY) &&
+                (y3 - Config.VERTEX_RADIUS <= maxY)) {
+
+            //System.out.println("INTERSECTION");
+
+            return new Couple<Boolean, Vector>(true, vector);
+        }
+
+        return new Couple<Boolean, Vector>(false, null);
+    }
+
+    /*private boolean isVertexEdgeIntersection(Vertex vertex, Edge edge) {
         double x1 = vertices.get(edge.getV()).getPosition().getX() - vertex.getPosition().getX();
         double y1 = vertices.get(edge.getV()).getPosition().getY() - vertex.getPosition().getY();
         double x2 = vertices.get(edge.getU()).getPosition().getX() - vertex.getPosition().getX();
@@ -400,16 +761,16 @@ public class Graph {
         double b = 2 * (x1 * dx + y1 * dy);
         double c = x1 * x1 + y1 * y1 - Config.VERTEX_RADIUS * Config.VERTEX_RADIUS;
 
-       /* double x1 = vertices.get(edge.getV()).getPosition().getX();
-        double y1 = vertices.get(edge.getV()).getPosition().getY();
-        double x2 = vertices.get(edge.getU()).getPosition().getX();
-        double y2 = vertices.get(edge.getU()).getPosition().getY();
-        double x3 = vertex.getPosition().getX();
-        double y3 = vertex.getPosition().getY();
-
-        double a = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-        double b = 2 * ((x2 - x1) * (x1 - x3) + (y2 - y1) * (y1 - y3));
-        double c = x3 * x3 + y3 * y3 + x1 * x1 + y1 * y1 - 2 * (x3 * x1 + y3 * y1) - Config.VERTEX_DIAMETER * Config.VERTEX_DIAMETER;*/
+//        double x1 = vertices.get(edge.getV()).getPosition().getX();
+//        double y1 = vertices.get(edge.getV()).getPosition().getY();
+//        double x2 = vertices.get(edge.getU()).getPosition().getX();
+//        double y2 = vertices.get(edge.getU()).getPosition().getY();
+//        double x3 = vertex.getPosition().getX();
+//        double y3 = vertex.getPosition().getY();
+//
+//        double a = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
+//        double b = 2 * ((x2 - x1) * (x1 - x3) + (y2 - y1) * (y1 - y3));
+//        double c = x3 * x3 + y3 * y3 + x1 * x1 + y1 * y1 - 2 * (x3 * x1 + y3 * y1) - Config.VERTEX_DIAMETER * Config.VERTEX_DIAMETER;
 
         if (-b < 0) {
             return c < 0;
@@ -418,7 +779,7 @@ public class Graph {
         } else {
             return a + b + c < 0;
         }
-    }
+    }*/
 
     private boolean isEdgesIntersection(Edge edge1, Edge edge2) {
         Vector v1 = vertices.get(edge1.getV()).getPosition();
@@ -466,7 +827,7 @@ public class Graph {
         if (denominator == 0) {
             return false;
             //return (x1 * y2 - x2 * y1) * (x4 - x3) - (x3 * y4 - x4 * y3) * (x2 - x1) == 0 &&
-              //      (x1 * y2 - x2 * y1) * (y4 - y3) - (x3 * y4 - x4 * y3) * (y2 - y1) == 0;
+            //      (x1 * y2 - x2 * y1) * (y4 - y3) - (x3 * y4 - x4 * y3) * (y2 - y1) == 0;
         } else {
             double numerator_a = (x4 - x2) * (y4 - y3) - (x4 - x3) * (y4 - y2);
             double numerator_b = (x1 - x2) * (y4 - y2) - (x4 - x2) * (y1 - y2);
@@ -478,11 +839,16 @@ public class Graph {
     }
 
     public double attraction(double x) {
-        return x * x / k;
+        double f = x * x / k;
+        return (x - Config.AVERAGE_EDGE_LENGTH > 0 ? f : -f);
+        //return k * x;
+        //return (x - Config.AVERAGE_EDGE_LENGTH) * (x - Config.AVERAGE_EDGE_LENGTH) / k;
     }
 
     public double repulsion(double x) {
-        return k * k / x;
+        double f = k * k / x;
+        return (x - Config.AVERAGE_EDGE_LENGTH > 0 ? -f : f);
+        //return k * k / x * x;
     }
 
     public Map<String, Vertex> getVertices() {

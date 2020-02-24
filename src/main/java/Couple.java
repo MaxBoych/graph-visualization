@@ -1,29 +1,29 @@
-public class Couple<T> {
+public class Couple<F, S> {
 
-    private T first;
-    private T second;
+    private F first;
+    private S second;
 
     public Couple() {
     }
 
-    public Couple(T first, T second) {
+    public Couple(F first, S second) {
         this.first = first;
         this.second = second;
     }
 
-    public T getFirst() {
+    public F getFirst() {
         return first;
     }
 
-    public T getSecond() {
+    public S getSecond() {
         return second;
     }
 
-    public void setFirst(T first) {
+    public void setFirst(F first) {
         this.first = first;
     }
 
-    public void setSecond(T second) {
+    public void setSecond(S second) {
         this.second = second;
     }
 }

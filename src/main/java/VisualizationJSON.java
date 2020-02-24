@@ -1,6 +1,10 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +22,10 @@ public class VisualizationJSON extends JPanel {
         graph = new Graph(vertices, edges);
         graph.drawingStart();
 
+        /*for (Vertex vertex : graph.getVertices().values()) {
+            System.out.println(vertex.getPosition().getX() + " " + vertex.getPosition().getY());
+        }*/
+
         //int width = vertices.size() *
         JFrame.setDefaultLookAndFeelDecorated(true);
         JFrame jFrame = new JFrame(Config.APP_NAME);
@@ -26,8 +34,25 @@ public class VisualizationJSON extends JPanel {
         jFrame.setSize(Config.WIDTH, Config.HEIGHT);
 
         VisualizationJSON panel = new VisualizationJSON();
-        jFrame.add(panel);
+        //JPanel container = new JPanel();
+        JScrollPane scroll = new JScrollPane(panel);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        jFrame.getContentPane().add(scroll);
+        //jFrame.add(scroll);
+        //jFrame.add(panel);
         jFrame.setVisible(true);
+
+        /*try {
+            String resultPath = "result.jpg";
+            File file = new File(resultPath);
+            BufferedImage image = ImageIO.read(file);
+            JLabel label = new JLabel(new ImageIcon(image));
+            jFrame.getContentPane().add(label);
+            jFrame.setVisible(true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
     }
 
     @Override
