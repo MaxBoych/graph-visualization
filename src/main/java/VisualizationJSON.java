@@ -18,11 +18,6 @@ public class VisualizationJSON extends JPanel {
         graph = new Graph(vertices, edges);
         graph.drawingStart();
 
-        /*for (Vertex vertex : graph.getVertices().values()) {
-            System.out.println(vertex.getPosition().getX() + " " + vertex.getPosition().getY());
-        }*/
-
-        //int width = vertices.size() *
         JFrame.setDefaultLookAndFeelDecorated(true);
         JFrame jFrame = new JFrame(Config.APP_NAME);
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -77,7 +72,8 @@ public class VisualizationJSON extends JPanel {
             drawVertexCircle(graphics2D, vertex);
             graphics2D.setTransform(defaultTransform);
 
-            drawVertexNameAndValue(graphics2D, vertex);
+            //drawVertexNameAndValue(graphics2D, vertex);
+            drawVertexValue(graphics2D, vertex);
             graphics2D.setTransform(defaultTransform);
         }
     }
@@ -99,6 +95,16 @@ public class VisualizationJSON extends JPanel {
         graphics.setFont(new Font(null, Font.BOLD, 14));
         graphics.drawString(
                 vertex.getName() + ": " + vertex.getValue(),
+                (float) (vertex.getPosition().getX() - Config.VERTEX_RADIUS + Config.VERTEX_DIAMETER / 2),
+                (float) (vertex.getPosition().getY() - Config.VERTEX_RADIUS + Config.VERTEX_DIAMETER / 2)
+        );
+    }
+
+    private void drawVertexValue(Graphics2D graphics, Vertex vertex) {
+        graphics.setColor(Color.BLACK);
+        graphics.setFont(new Font(null, Font.BOLD, 14));
+        graphics.drawString(
+                vertex.getValue(),
                 (float) (vertex.getPosition().getX() - Config.VERTEX_RADIUS + Config.VERTEX_DIAMETER / 2),
                 (float) (vertex.getPosition().getY() - Config.VERTEX_RADIUS + Config.VERTEX_DIAMETER / 2)
         );

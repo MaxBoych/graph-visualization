@@ -2,6 +2,8 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 public class FileJSON {
@@ -54,6 +56,8 @@ public class FileJSON {
             edges.add(new Edge(edge));
         }
 
+        convertToDot();
+
        /* for (Vertex vertex : vertices.values()) {
             System.out.println(vertex.getName());
         }*/
@@ -61,6 +65,31 @@ public class FileJSON {
         /*for (Edge edge : edges) {
             System.out.println(edge.getV() + " " + edge.getU());
         }*/
+    }
+
+    private void convertToDot() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("digraph G {\n");
+        for (Edge edge : edges) {
+            builder.append("\t\"")
+                    .append(vertices.get(edge.getV()).getValue())
+                    .append("\" -> \"")
+                    .append(vertices.get(edge.getU()).getValue())
+                    .append("\" [label = \"")
+                    .append(edge.getValue())
+                    .append("\"];\n");
+        }
+        builder.append("}");
+
+        try {
+            PrintWriter writer = new PrintWriter("/home/max/gitwatch/lab6_vlad/VisualizationJSON/fileDOT.txt", "UTF-8");
+            writer.println(builder.toString());
+            writer.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     public Map<String, Vertex> getVertices() {
